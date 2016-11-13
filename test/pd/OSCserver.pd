@@ -1,0 +1,10 @@
+#N canvas 110 416 450 300 10;
+#X obj 156 34 dumpOSC 8000;
+#X obj 109 109 print;
+#X floatatom 160 170 5 0 0 0 - - -;
+#X obj 224 197 print ex;
+#X obj 229 127 OSCroute /filter;
+#X connect 0 0 1 0;
+#X connect 0 0 4 0;
+#X connect 4 0 2 0;
+#X connect 4 1 3 0;
