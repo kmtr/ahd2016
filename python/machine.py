@@ -1,9 +1,10 @@
 '''OSC Arduino Motor
 '''
 
-import signal
 import argparse
 import logging
+import signal
+import time
 
 import serial
 
@@ -44,12 +45,14 @@ class MachineDriver:
     '''
 
     arduinos = []
+    busy = False
 
     def __init__(self, arduino_ports):
         self.arduinos = []
         for i, port in enumerate(arduino_ports):
             # set arudino which has N motors
             self.arduinos.append(ArduinoDriver(i, port, 5))
+        MachineDriver.busy = False
 
     def status(self):
         LOGGER.info('STATUS:')
@@ -86,18 +89,32 @@ class MachineDriver:
         self.load()
 
     def pong_dispatcher(self, unused_addr, args):
+        if MachineDriver.busy:
+            return
         print('pong')
 
+        MachineDriver.busy = True
+        time.sleep(1)
+        MachineDriver.busy = False
+
     def figure_type_dispatcher(self, unused_addr, args, val):
+        if MachineDriver.busy:
+            return
         try:
             cmds = commands[int(val)]
             LOGGER.debug(cmds)
             for i, cmd in enumerate(cmds):
                 self.arduinos[i].set_pos(cmd)
+
+            MachineDriver.busy = True
+            time.sleep(10)
+            MachineDriver.busy = False
         except ValueError:
             pass
 
     def set_dispatcher(self, unused_addr, args, arduino, motor, pos):
+        if MachineDriver.busy:
+            return
         target = self.arduinos[arduino]
         cmd = [m.pos for m in target.motors]
         if len(cmd) - 1 < motor:
@@ -105,7 +122,13 @@ class MachineDriver:
         cmd[motor] = pos
         self.arduinos[arduino].set_pos(cmd)
 
+        MachineDriver.busy = True
+        time.sleep(10)
+        MachineDriver.busy = False
+
     def rot_dispatcher(self, unused_addr, args, arduino, motor, step):
+        if MachineDriver.busy:
+            return
         target = self.arduinos[arduino]
         cmd = [m.pos for m in target.motors]
         if len(cmd) - 1 < motor:
@@ -113,11 +136,21 @@ class MachineDriver:
         cmd[motor] += step
         self.arduinos[arduino].set_pos(cmd)
 
+        MachineDriver.busy = True
+        time.sleep(10)
+        MachineDriver.busy = False
+
     def reset_dispatcher(self, unused_addr, args, arduino, motor, pos):
+        if MachineDriver.busy:
+            return
         target = self.arduinos[arduino]
         if len(target.motors) - 1 < motor:
             return
         target.motors[motor].reset(pos)
+
+        MachineDriver.busy = True
+        time.sleep(0.01)
+        MachineDriver.busy = False
 
 
 class ArduinoDriver:
