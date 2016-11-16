@@ -31,6 +31,13 @@ class OSCServer:
         self._server.server_close()
 
 
+commands = {
+    0: [
+        [12, 24, 36, 24, 12, 0],
+        [12, 12, 12, 12, 10, 0],
+    ],
+}
+
 class MachineDriver:
     '''MachineDriver controlls all devices.
     One machine has some Arduinos
@@ -38,16 +45,80 @@ class MachineDriver:
 
     arduinos = []
 
-    def __init(self, arduino_ports):
+    def __init__(self, arduino_ports):
         self.arduinos = []
         for i, port in enumerate(arduino_ports):
-            self.arduinos[i] = ArduinoDriver(port, 3)
+            # set arudino which has N motors
+            self.arduinos.append(ArduinoDriver(i, port, 5))
+
+    def status(self):
+        LOGGER.info('STATUS:')
+        for arduino in self.arduinos:
+            arduino.status()
+
+    def save(self):
+        with open('pos.txt', 'w') as f:
+            for arduino in self.arduinos:
+                data = []
+                data.append(str(arduino.index))
+                for motor in arduino.motors:
+                    data.append(str(motor.pos))
+                data.append('\n')
+                f.writelines(';'.join(data))
+        LOGGER.info('saved')
+
+    def load(self):
+        with open('pos.txt') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                arduino = self.arduinos[int(line[0])]
+                positions = line[2:len(line)-2].split(';')
+                for i, pos in enumerate(positions):
+                    arduino.motors[i].reset(int(pos))
+
+    def status_dispatcher(self, unused_addr, args):
+        self.status()
+
+    def save_dispatcher(self, unused_addr, args):
+        self.save()
+
+    def load_dispatcher(self, unused_addr, args):
+        self.load()
+
+    def pong_dispatcher(self, unused_addr, args):
+        print('pong')
 
     def figure_type_dispatcher(self, unused_addr, args, val):
         try:
-            LOGGER.debug(int(val))
+            cmds = commands[int(val)]
+            LOGGER.debug(cmds)
+            for i, cmd in enumerate(cmds):
+                self.arduinos[i].set_pos(cmd)
         except ValueError:
             pass
+
+    def set_dispatcher(self, unused_addr, args, arduino, motor, pos):
+        target = self.arduinos[arduino]
+        cmd = [m.pos for m in target.motors]
+        if len(cmd) - 1 < motor:
+            return
+        cmd[motor] = pos
+        self.arduinos[arduino].set_pos(cmd)
+
+    def rot_dispatcher(self, unused_addr, args, arduino, motor, step):
+        target = self.arduinos[arduino]
+        cmd = [m.pos for m in target.motors]
+        if len(cmd) - 1 < motor:
+            return
+        cmd[motor] += step
+        self.arduinos[arduino].set_pos(cmd)
+
+    def reset_dispatcher(self, unused_addr, args, arduino, motor, pos):
+        target = self.arduinos[arduino]
+        if len(target.motors) - 1 < motor:
+            return
+        target.motors[motor].reset(pos)
+
 
 class ArduinoDriver:
     '''ArduinoDriver controlls an arduino.
@@ -58,27 +129,35 @@ class ArduinoDriver:
 
     device_port = '/dev/null'
 
-    '''
-    @device ex: /dev/ttyUSB0
-    '''
-    def __init__(self, device_port, num_of_motors=3):
+    def __init__(self, index, device_port, num_of_motors=5):
+        '''
+        @device_port ex: /dev/ttyUSB0
+        @num_of_motors Number of motors
+        '''
+        self.index = index
         self.device_port = device_port
         self.motors = []
         for i in range(0, num_of_motors):
-            self.motors[i] = MotorDriver()
+            self.motors.append(MotorDriver(i))
 
-    def rotate(self):
-        deltas = []
-        for i in range(0, len(self.motors)):
-            deltas[i] = self.motors[i]
-        self.buildCommand(0, deltas)
+    def status(self):
+        LOGGER.info('Arduino %s:', self.index)
+        for m in self.motors:
+            LOGGER.info('Motor %s: position %d', m.index, m.pos)
 
-    def buildCommand(self, led = 0, deltas = None):
-        if deltas is None:
-            deltas = [0, 0, 0]
-        command = str(led)
-        command += ArduinoDriver.SEP + ArduinoDriver.SEP.join(map(str, deltas))
+    def set_pos(self, positions = []):
+        steps = []
+        for i, pos in enumerate(positions[:len(self.motors)]):
+            steps.append(self.motors[i].set_pos(pos))
+        self.buildCommand(0, steps)
+
+    def buildCommand(self, led = 0, steps = None):
+        if steps is None:
+            return 'x\n'
+        command = ArduinoDriver.SEP.join(map(str, steps))
+        command += ArduinoDriver.SEP + str(led)
         command += ArduinoDriver.TERM
+        LOGGER.info('Arduino %s: command %s', self.index, command)
         return command
 
     def sendCommand(self, command):
@@ -94,17 +173,23 @@ class MotorDriver:
     STEP_UNIT = 7.5
     MAX_STEP = 48
 
-    def __init__(self):
-        self.angle = 0
+    def __init__(self, index=0):
+        self.index = index
+        self.pos = 0
 
-    def reset(self):
-        self.angle = 0
+    def status(self):
+        LOGGER.info('Motor %s: position %d', self.index, self.pos)
 
-    def rotate(self, step=0):
-        step = step % MotorDriver.MAX_STEP
-        delta = MotorDriver.STEP_UNIT * step
-        delta = round(delta, 1)
-        return delta
+    def reset(self, pos):
+        LOGGER.info('Motor %s: reset position %d (on memory)', format(self.index), pos)
+        self.pos = pos
+
+    def set_pos(self, pos):
+        _pos = pos % MotorDriver.MAX_STEP
+        step = - (self.pos - _pos)
+        self.pos = _pos
+        self.status()
+        return step
 
 
 if __name__ == '__main__':
@@ -114,15 +199,23 @@ if __name__ == '__main__':
     PARSER.add_argument('--port',
                         type=int, default=5005, help='The port to listen on')
     ARGS = PARSER.parse_args()
-    DRIVER = MachineDriver()
+    DRIVER = MachineDriver(['/dev/null', '/dev/null'])
 
     DISPATCHER = dispatcher.Dispatcher()
-    DISPATCHER.map('/filter', print)
+
+    DISPATCHER.map('/ping', DRIVER.pong_dispatcher, 'PONG')
+    DISPATCHER.map('/status', DRIVER.status_dispatcher, 'status')
+    DISPATCHER.map('/save', DRIVER.save_dispatcher, 'save')
+    DISPATCHER.map('/load', DRIVER.load_dispatcher, 'load')
+
     DISPATCHER.map('/figure', DRIVER.figure_type_dispatcher, 'Figure Type')
+    DISPATCHER.map('/set', DRIVER.set_dispatcher, 'Set Arduino Motor Position')
+    DISPATCHER.map('/rot', DRIVER.rot_dispatcher, 'Rotate Arduino Motor step')
+    DISPATCHER.map('/reset', DRIVER.reset_dispatcher, 'Reset Arduino Motor')
 
     SERVER = OSCServer(DISPATCHER, ARGS.ip, ARGS.port)
 
-    def sigint_func(num, frame):
+    def sigint_func(_num, _frame):
         '''sigint_func catch SIGINT and close osc server
         '''
         SERVER.close()
