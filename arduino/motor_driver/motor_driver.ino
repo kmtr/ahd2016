@@ -35,10 +35,10 @@ struct OUTPUT_PIN_MAP {
 };
 
 struct OUTPUT_PIN_MAP opMap[4] = {
-    HIGH, HIGH, //
-    LOW,  HIGH, //
-    LOW,  LOW,  //
-    HIGH, LOW   //
+  HIGH, HIGH, //
+  LOW,  HIGH, //
+  LOW,  LOW,  //
+  HIGH, LOW   //
 };
 
 void step(int mIndex, int s) {
@@ -68,26 +68,26 @@ void step(int mIndex, int s) {
     }
 
     switch (mIndex) {
-    case 0:
-      digitalWrite(MOTOR0_A, opMap[mIndexes[mIndex]].A);
-      digitalWrite(MOTOR0_B, opMap[mIndexes[mIndex]].B);
-      break;
-    case 1:
-      digitalWrite(MOTOR1_A, opMap[mIndexes[mIndex]].A);
-      digitalWrite(MOTOR1_B, opMap[mIndexes[mIndex]].B);
-      break;
-    case 2:
-      digitalWrite(MOTOR2_A, opMap[mIndexes[mIndex]].A);
-      digitalWrite(MOTOR2_B, opMap[mIndexes[mIndex]].B);
-      break;
-    case 3:
-      digitalWrite(MOTOR3_A, opMap[mIndexes[mIndex]].A);
-      digitalWrite(MOTOR3_B, opMap[mIndexes[mIndex]].B);
-      break;
-    case 4:
-      digitalWrite(MOTOR4_A, opMap[mIndexes[mIndex]].A);
-      digitalWrite(MOTOR4_B, opMap[mIndexes[mIndex]].B);
-      break;
+      case 0:
+        digitalWrite(MOTOR0_A, opMap[mIndexes[mIndex]].A);
+        digitalWrite(MOTOR0_B, opMap[mIndexes[mIndex]].B);
+        break;
+      case 1:
+        digitalWrite(MOTOR1_A, opMap[mIndexes[mIndex]].A);
+        digitalWrite(MOTOR1_B, opMap[mIndexes[mIndex]].B);
+        break;
+      case 2:
+        digitalWrite(MOTOR2_A, opMap[mIndexes[mIndex]].A);
+        digitalWrite(MOTOR2_B, opMap[mIndexes[mIndex]].B);
+        break;
+      case 3:
+        digitalWrite(MOTOR3_A, opMap[mIndexes[mIndex]].A);
+        digitalWrite(MOTOR3_B, opMap[mIndexes[mIndex]].B);
+        break;
+      case 4:
+        digitalWrite(MOTOR4_A, opMap[mIndexes[mIndex]].A);
+        digitalWrite(MOTOR4_B, opMap[mIndexes[mIndex]].B);
+        break;
     }
     delay(PulseWidth);
   }
@@ -114,7 +114,8 @@ void recvStr(char *buf) {
 //       ex:
 //          10;-10;20;30;1\n
 void parseCommand(char *str, int *cmd) {
-  sscanf(str, "%d;%d;%d;%d;%d;%d", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
+  sscanf(str, "%d;%d;%d;%d;%d;%d",
+         &cmd[0], &cmd[1], &cmd[2], &cmd[3], &cmd[4], &cmd[5]);
 }
 
 void setup() {
@@ -142,26 +143,26 @@ void setup() {
   Serial.begin(9600);
 }
 
+
 void loop() {
+  
   char str[255];
   if (Serial.available() > 0) {
     recvStr(str);
     int cmd[] = {0, 0, 0, 0, 0, 0};
     Serial.write(str);
     parseCommand(str, cmd);
-
     if (cmd[5] == 1) {
       digitalWrite(LED_PIN, HIGH);
     } else {
       digitalWrite(LED_PIN, LOW);
     }
-
     digitalWrite(MOTOR_CTRPIN, HIGH);
-
     step(MOTOR0, cmd[MOTOR0]);
     step(MOTOR1, cmd[MOTOR1]);
     step(MOTOR2, cmd[MOTOR2]);
     step(MOTOR3, cmd[MOTOR3]);
     step(MOTOR4, cmd[MOTOR4]);
+    digitalWrite(MOTOR_CTRPIN, LOW);
   }
 }
