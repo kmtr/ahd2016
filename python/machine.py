@@ -59,8 +59,8 @@ class MachineDriver:
         for arduino in self.arduinos:
             arduino.status()
 
-    def save(self):
-        with open('pos.txt', 'w') as f:
+    def save(self, filename='pos.sav'):
+        with open(filename, 'w') as f:
             for arduino in self.arduinos:
                 data = []
                 data.append(str(arduino.index))
@@ -70,8 +70,8 @@ class MachineDriver:
                 f.writelines(';'.join(data))
         LOGGER.info('saved')
 
-    def load(self):
-        with open('pos.txt') as f:
+    def load(self, filename='pos.sav'):
+        with open(filename) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 arduino = self.arduinos[int(line[0])]
@@ -231,8 +231,11 @@ if __name__ == '__main__':
                         default='127.0.0.1', help='The ip to listen on')
     PARSER.add_argument('--port',
                         type=int, default=5005, help='The port to listen on')
+    PARSER.add_argument('--devs',
+                        default=['/dev/null'], nargs='+', help='usb devices. ex: /dev/null')
     ARGS = PARSER.parse_args()
-    DRIVER = MachineDriver(['/dev/null', '/dev/null'])
+    LOGGER.info('devices: %s', ARGS.devs)
+    DRIVER = MachineDriver(ARGS.devs)
 
     DISPATCHER = dispatcher.Dispatcher()
 
