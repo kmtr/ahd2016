@@ -182,7 +182,8 @@ class ArduinoDriver:
         steps = []
         for i, pos in enumerate(positions[:len(self.motors)]):
             steps.append(self.motors[i].set_pos(pos))
-        self.buildCommand(0, steps)
+        cmd = self.buildCommand(0, steps)
+        self.sendCommand(cmd)
 
     def buildCommand(self, led = 0, steps = None):
         if steps is None:
