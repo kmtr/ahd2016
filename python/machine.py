@@ -14,6 +14,8 @@ from pythonosc import osc_server
 
 logging.basicConfig(level=logging.DEBUG)
 LOGGER = logging.getLogger('main')
+SEP = ';'
+TERM = '\n'
 
 class OSCServer:
 
@@ -123,7 +125,7 @@ class MachineDriver:
         self.arduinos[arduino].set_pos(cmd)
 
         MachineDriver.busy = True
-        time.sleep(10)
+        #time.sleep(10)
         MachineDriver.busy = False
 
     def rot_dispatcher(self, unused_addr, args, arduino, motor, step):
@@ -157,8 +159,6 @@ class ArduinoDriver:
     '''ArduinoDriver controlls an arduino.
     '''
 
-    SEP = ';'
-    TERM = '\n'
 
     device_port = '/dev/null'
 
@@ -169,6 +169,7 @@ class ArduinoDriver:
         '''
         self.index = index
         self.device_port = device_port
+        self.ser = serial.Serial(self.device_port, 9600)
         self.motors = []
         for i in range(0, num_of_motors):
             self.motors.append(MotorDriver(i))
@@ -188,19 +189,20 @@ class ArduinoDriver:
     def buildCommand(self, led = 0, steps = None):
         if steps is None:
             return 'x\n'
-        command = ArduinoDriver.SEP.join(map(str, steps))
-        command += ArduinoDriver.SEP + str(led)
-        command += ArduinoDriver.TERM
+        command = SEP.join(map(str, steps))
+        command += SEP + str(1)
+        command += TERM
         LOGGER.info('Arduino %s: command %s', self.index, command)
         return command
 
     def sendCommand(self, command):
-        with serial.Serial(self.device_port, 9600) as ser:
-            try:
-                ser.write(command.encode())
-            except serial.portNotOpenError as ex:
-                LOGGER.error(ex)
-
+        try:
+            self.ser.write(command.encode())
+            self.ser.flush()
+        except serial.portNotOpenError as ex:
+            LOGGER.error(ex)
+        except Exception as ex:
+            LOGGER.error(ex)
 
 class MotorDriver:
 
@@ -226,6 +228,20 @@ class MotorDriver:
         return step
 
 
+def testCommand(device_port, command):
+    print(command)
+    ser = serial.Serial(device_port, 9600)
+    try:
+        #ser.write((command + TERM).encode())
+        ser.write('0;0;0;0;0;1\n'.encode())
+        ser.flush()
+    except serial.portNotOpenError as ex:
+        LOGGER.error(ex)
+    except Exception as ex:
+        LOGGER.error(ex)
+    time.sleep(10)
+
+
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
     PARSER.add_argument('--ip',
@@ -234,8 +250,15 @@ if __name__ == '__main__':
                         type=int, default=5005, help='The port to listen on')
     PARSER.add_argument('--devs',
                         default=['/dev/null'], nargs='+', help='usb devices. ex: /dev/null')
+    PARSER.add_argument('--cmd',
+                        default='', help='command')
     ARGS = PARSER.parse_args()
+
     LOGGER.info('devices: %s', ARGS.devs)
+    if ARGS.cmd != '':
+        testCommand(ARGS.devs[0], ARGS.cmd)
+        exit()
+
     DRIVER = MachineDriver(ARGS.devs)
 
     DISPATCHER = dispatcher.Dispatcher()
