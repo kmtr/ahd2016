@@ -109,7 +109,7 @@ class MachineDriver:
                 self.arduinos[i].set_pos(cmd)
 
             MachineDriver.busy = True
-            time.sleep(10)
+            time.sleep(WAIT_TIME)
             MachineDriver.busy = False
         except ValueError:
             pass
@@ -125,7 +125,7 @@ class MachineDriver:
         self.arduinos[arduino].set_pos(cmd)
 
         MachineDriver.busy = True
-        #time.sleep(10)
+        time.sleep(WAIT_TIME)
         MachineDriver.busy = False
 
     def rot_dispatcher(self, unused_addr, args, arduino, motor, step):
@@ -139,7 +139,7 @@ class MachineDriver:
         self.arduinos[arduino].set_pos(cmd)
 
         MachineDriver.busy = True
-        time.sleep(10)
+        time.sleep(WAIT_TIME)
         MachineDriver.busy = False
 
     def reset_dispatcher(self, unused_addr, args, arduino, motor, pos):
@@ -169,7 +169,8 @@ class ArduinoDriver:
         '''
         self.index = index
         self.device_port = device_port
-        self.ser = serial.Serial(self.device_port, 9600)
+        if not DEBUG:
+            self.ser = serial.Serial(self.device_port, 9600)
         self.motors = []
         for i in range(0, num_of_motors):
             self.motors.append(MotorDriver(i))
@@ -189,13 +190,15 @@ class ArduinoDriver:
     def buildCommand(self, led = 0, steps = None):
         if steps is None:
             return 'x\n'
-        command = SEP.join(map(str, steps))
-        command += SEP + str(1)
+        command = SEP.join(map(str, steps)) 
+        command += SEP + str(led)
         command += TERM
         LOGGER.info('Arduino %s: command %s', self.index, command)
         return command
 
     def sendCommand(self, command):
+        if DEBUG:
+            return
         try:
             self.ser.write(command.encode())
             self.ser.flush()
@@ -239,8 +242,11 @@ def testCommand(device_port, command):
         LOGGER.error(ex)
     except Exception as ex:
         LOGGER.error(ex)
-    time.sleep(10)
+    time.sleep(WAIT_TIME)
 
+
+DEBUG = False
+WAIT_TIME = 10
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
@@ -252,7 +258,12 @@ if __name__ == '__main__':
                         default=['/dev/null'], nargs='+', help='usb devices. ex: /dev/null')
     PARSER.add_argument('--cmd',
                         default='', help='command')
+    PARSER.add_argument('--debug',
+                        type=bool, default=False)
     ARGS = PARSER.parse_args()
+    DEBUG = ARGS.debug
+    if DEBUG:
+        WAIT_TIME = 0
 
     LOGGER.info('devices: %s', ARGS.devs)
     if ARGS.cmd != '':

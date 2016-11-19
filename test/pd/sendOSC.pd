@@ -7,12 +7,12 @@
 #X msg 299 52 send /figure 0;
 #X msg 31 168 disconnect;
 #X msg 217 20 send /ping;
-#X msg 300 134 send /rot 0 1 10;
-#X msg 299 96 send /set 0 1 10;
 #X msg 298 180 send /reset 0 1 0;
 #X msg 302 21 send /status;
 #X msg 30 225 send /save;
 #X msg 458 19 send /load;
+#X msg 299 96 send /set 0 0 20;
+#X msg 300 134 send /rot 0 0 20;
 #X connect 0 0 2 0;
 #X connect 0 1 3 0;
 #X connect 1 0 0 0;
