@@ -12,6 +12,8 @@ import serial
 from pythonosc import dispatcher
 from pythonosc import osc_server
 
+from pattern import PATTERN
+
 logging.basicConfig(level=logging.DEBUG)
 LOGGER = logging.getLogger('main')
 SEP = ';'
@@ -20,22 +22,6 @@ SERIAL_BAUDRATE = 57600
 NUM_OF_ARMS_PER_SIDE = 4
 LEFT_ARM = 0
 RIGHT_ARM = 1
-
-PATTERN = {
-    -1: [ # reset
-        [0, 0, 0, 0], # LEFT
-        [0, 0, 0, 0], # RIGHT
-    ],
-    0: [ # T
-        [90, 0, 0, 0], # LEFT
-        [90, 0, 0, 0], # RIGHT
-    ],
-    1: [ # K
-        [135, 0, 0, 0], # LEFT
-        [0, 0, 0, 0], # RIGHT
-    ],
-}
-
 
 def randomizer(a, b):
     seed0 = random.randint(a, b)
