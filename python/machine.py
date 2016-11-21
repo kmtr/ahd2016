@@ -12,7 +12,6 @@ import serial
 from pythonosc import dispatcher
 from pythonosc import osc_server
 
-
 logging.basicConfig(level=logging.DEBUG)
 LOGGER = logging.getLogger('main')
 SEP = ';'
@@ -24,16 +23,16 @@ RIGHT_ARM = 1
 
 PATTERN = {
     -1: [ # reset
-            [0, 0, 0, 0], # LEFT
-            [0, 0, 0, 0], # RIGHT
+        [0, 0, 0, 0], # LEFT
+        [0, 0, 0, 0], # RIGHT
     ],
     0: [ # T
-            [90, 0, 0, 0], # LEFT
-            [90, 0, 0, 0], # RIGHT
+        [90, 0, 0, 0], # LEFT
+        [90, 0, 0, 0], # RIGHT
     ],
     1: [ # K
-            [135, 0, 0, 0], # LEFT
-            [0, 0, 0, 0], # RIGHT
+        [135, 0, 0, 0], # LEFT
+        [0, 0, 0, 0], # RIGHT
     ],
 }
 
@@ -151,12 +150,11 @@ class ArduinoDriver:
             LOGGER.error(ex)
 
 def testCommand(device_port, command):
-    print(device_port)
     ser = serial.Serial(device_port, SERIAL_BAUDRATE)
     try:
         ser.write(("0;0;30\n").encode())
         ser.flush()
-        time.sleep(5)
+        time.sleep(1)
     except serial.portNotOpenError as ex:
         LOGGER.error(ex)
     except Exception as ex:
@@ -164,7 +162,6 @@ def testCommand(device_port, command):
 
 
 DEBUG = False
-WAIT_TIME = 10
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
@@ -178,13 +175,12 @@ if __name__ == '__main__':
                         default='', help='command')
     PARSER.add_argument('--debug',
                         type=bool, default=False)
+
     ARGS = PARSER.parse_args()
     DEBUG = ARGS.debug
-    if DEBUG:
-        WAIT_TIME = 0
 
     LOGGER.info('BAURATE: %s', SERIAL_BAUDRATE)
-    LOGGER.info('devices: %s', ARGS.dev)
+    LOGGER.info('device: %s', ARGS.dev)
     if ARGS.cmd != '':
         testCommand(ARGS.dev, ARGS.cmd)
         exit()
