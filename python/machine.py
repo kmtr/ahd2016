@@ -3,6 +3,7 @@
 
 import argparse
 import logging
+import random
 import signal
 import time
 
@@ -17,6 +18,9 @@ LOGGER = logging.getLogger('main')
 SEP = ';'
 TERM = '\n'
 SERIAL_BAUDRATE = 57600
+NUM_OF_ARMS_PER_SIDE = 4
+LEFT_ARM = 0
+RIGHT_ARM = 1
 
 PATTERN = {
     -1: [ # reset
@@ -32,6 +36,12 @@ PATTERN = {
             [0, 0, 0, 0], # RIGHT
     ],
 }
+
+
+def randomizer(a, b):
+    seed0 = random.randint(a, b)
+    seed1 = random.randint(a, b)
+    return random.randint(int(seed0), int(seed1))
 
 class OSCServer:
 
@@ -80,6 +90,11 @@ class MachineDriver:
     def reset_dispatcher(self, unused_addr, args):
         self.arduino.reset()
 
+    def random_dispatcher(self, unused_addr, args):
+        for i in range(NUM_OF_ARMS_PER_SIDE):
+            pos = randomizer(0, 180)
+            self.arduino.set_pos(LEFT_ARM, i, pos)
+            self.arduino.set_pos(RIGHT_ARM, (NUM_OF_ARMS_PER_SIDE-1) - i, pos)
 
 class ArduinoDriver:
     '''ArduinoDriver controlls an arduino.
@@ -99,15 +114,20 @@ class ArduinoDriver:
 
     def status(self):
         LOGGER.info('Arduino:')
-        if self.led:
-            self.sendCommand('l0')
-            self.led = False
-        else:
+        self.set_led(not self.led)
+
+    def set_led(self, tika):
+        if tika:
             self.sendCommand('l1')
             self.led = True
+        else:
+            self.sendCommand('l0')
+            self.led = False
 
     def set_pos(self, side, idx, move):
-        self.sendCommand(';'.join([str(side), str(idx), str(move)]))
+        if side > RIGHT_ARM:
+            return
+        self.sendCommand(SEP.join([str(side), str(idx), str(move)]))
 
     def reset(self):
         self.sendPattern(-1)
@@ -116,11 +136,7 @@ class ArduinoDriver:
         LOGGER.debug(PATTERN[int(pattern_id)])
         for side, positions in enumerate(PATTERN[int(pattern_id)]):
             for idx, pos in enumerate(positions):
-                self.sendCommand(';'.join([
-                    str(side),
-                    str(idx),
-                    str(pos)
-                    ]))
+                self.set_pos(side, idx, pos)
 
     def sendCommand(self, command):
         print('sendCommand: ' + command)
@@ -131,7 +147,7 @@ class ArduinoDriver:
             self.ser.flush()
         except serial.portNotOpenError as ex:
             LOGGER.error(ex)
-        except ex:
+        except Exception as ex:
             LOGGER.error(ex)
 
 def testCommand(device_port, command):
@@ -180,7 +196,7 @@ if __name__ == '__main__':
     DISPATCHER.map('/status', MACHINE.status_dispatcher, 'status')
     DISPATCHER.map('/pattern', MACHINE.pattern_dispatcher, 'Pattern Type')
     DISPATCHER.map('/set', MACHINE.set_dispatcher, 'Set Arduino Motor Position')
-    DISPATCHER.map('/reset', MACHINE.reset_dispatcher, 'Reset')
+    DISPATCHER.map('/reset', MACHINE.random_dispatcher, 'Reset')
 
     SERVER = OSCServer(DISPATCHER, ARGS.ip, ARGS.port)
 
