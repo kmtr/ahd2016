@@ -1,4 +1,4 @@
-#N canvas 21 422 640 405 10;
+#N canvas 25 469 956 409 10;
 #X obj 173 194 sendOSC;
 #X msg 33 94 connect localhost 5005;
 #X floatatom 169 233 5 0 0 0 - - -;
@@ -7,10 +7,10 @@
 #X msg 31 168 disconnect;
 #X msg 299 16 send /ping;
 #X msg 397 16 send /status;
-#X msg 404 229 send /reset;
-#X msg 405 123 send /pattern 0;
-#X msg 403 156 send /pattern 1;
-#X msg 404 194 send /set 0 0 180;
+#X msg 354 307 send /reset;
+#X msg 328 106 send /pattern 0;
+#X msg 314 155 send /pattern 1;
+#X msg 545 202 send /set 0 0 0 0 0 0 0 0;
 #X connect 0 0 2 0;
 #X connect 0 1 3 0;
 #X connect 1 0 0 0;
