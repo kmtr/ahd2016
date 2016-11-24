@@ -47,16 +47,16 @@ PATTERN = {
     10: [
         # katate-down-R
         0, 0, 0, 0, # LEFT
-        0, 0, 0, 60, # RIGHT
+        60, 0, 0, 0, # RIGHT
     ],
     11: [
         # katate-up-L
-        0, 0, 0, 0, # LEFT
-        150, 0, 0, 0, # RIGHT
+        150, 0, 0, 0, # LEFT
+        0, 0, 0, 0, # RIGHT
     ],
     12: [
-        # katate-up-L
-        150, 0, 0, 60, # LEFT
+        # katate-down-L
+        60, 0, 0, 0, # LEFT
         0, 0, 0, 0, # RIGHT
     ],
     13: [
