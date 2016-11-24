@@ -35,4 +35,60 @@ PATTERN = {
         90, 0, 0, 0, # LEFT
         90, 0, 0, 0, # RIGHT
         ],
+    8: [ # Y
+        170, 0, 0, 0, # LEFT
+        170, 0, 0, 0, # RIGHT
+        ],
+    9: [
+        # katate-up-R
+        0, 0, 0, 0, # LEFT
+        150, 0, 0, 0, # RIGHT
+    ],
+    10: [
+        # katate-down-R
+        0, 0, 0, 0, # LEFT
+        0, 0, 0, 60, # RIGHT
+    ],
+    11: [
+        # katate-up-L
+        0, 0, 0, 0, # LEFT
+        150, 0, 0, 0, # RIGHT
+    ],
+    12: [
+        # katate-up-L
+        150, 0, 0, 60, # LEFT
+        0, 0, 0, 0, # RIGHT
+    ],
+    13: [
+        # Naname-down
+        0, 0, 0, 60, # LEFT
+        0, 0, 0, 00, # RIGHT
+    ],
+}
+
+_HOLD = {
+    9: [ # X
+        150, 0, 0, 60, # LEFT
+        150, 0, 0, 60, # RIGHT
+    ],
+    10: [ # E
+        0, 0, 0, 0, # LEFT
+        90, 90, 0, 90, # RIGHT
+    ],
+    10: [ # r-E
+        90, 90, 0, 90, # LEFT
+        0, 0, 0, 0,    # RIGHT
+    ],
+    10: [ # Yabai
+        0, 0, 0, 0, # LEFT
+        0, 0, 90, 0, # RIGHT
+    ],
+    10: [ # F
+        0, 0, 0, 0, # LEFT
+        90, 0, 0, 90, # RIGHT
+    ],
+    10: [ # r-F
+        90, 0, 0, 90, # LEFT
+        0, 0, 0, 0, # RIGHT
+    ]
 }
