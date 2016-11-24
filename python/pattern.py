@@ -62,7 +62,7 @@ PATTERN = {
     13: [
         # Naname-down
         0, 0, 0, 60, # LEFT
-        0, 0, 0, 00, # RIGHT
+        0, 0, 0, 60, # RIGHT
     ],
 }
 
