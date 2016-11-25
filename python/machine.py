@@ -26,7 +26,12 @@ RIGHT_ARM = 1
 def randomizer(a, b):
     seed0 = random.randint(a, b)
     seed1 = random.randint(a, b)
-    return random.randint(int(seed0), int(seed1))
+    print(seed0)
+    print(seed1)
+    if seed0 < seed1:
+        return random.randint(int(seed0), int(seed1))
+    else:
+        return random.randint(int(seed1), int(seed0))
 
 class OSCServer:
 
@@ -78,7 +83,7 @@ class MachineDriver:
     def random_dispatcher(self, unused_addr, args):
         pattern = []
         for i in range(NUM_OF_MOTOR):
-            pattern.append(randomizer(0, 180))
+            pattern.append(int(randomizer(0, 180)))
         self.arduino.sendCommand(SEP.join(str(a) for a in pattern))
 
 class ArduinoDriver:
@@ -176,6 +181,7 @@ if __name__ == '__main__':
     DISPATCHER.map('/pattern', MACHINE.pattern_dispatcher, 'Pattern Type')
     DISPATCHER.map('/set', MACHINE.set_dispatcher, 'Set Arduino Motor Position')
     DISPATCHER.map('/reset', MACHINE.reset_dispatcher, 'Reset')
+    DISPATCHER.map('/random', MACHINE.random_dispatcher, 'Random')
 
     SERVER = OSCServer(DISPATCHER, ARGS.ip, ARGS.port)
 
