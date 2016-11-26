@@ -131,7 +131,7 @@ class ArduinoDriver:
         try:
             self.ser.write((command + TERM).encode())
             self.ser.flush()
-            time.sleep(1)
+            time.sleep(0.100)
         except serial.portNotOpenError as ex:
             LOGGER.error(ex)
         except Exception as ex:
